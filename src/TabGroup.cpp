@@ -617,7 +617,7 @@ void Hy3TabGroup::tick() {
 	this->bar.tick();
 
 	if (valid(this->workspace)) {
-		auto has_fullscreen = this->workspace->m_bHasFullscreenWindow;
+		auto has_fullscreen = this->workspace->m_hasFullscreenWindow;
 
 		if (!has_fullscreen && *no_gaps_when_only) {
 			auto root_node = g_Hy3Layout->getWorkspaceRootGroup(this->workspace.get());
@@ -682,7 +682,7 @@ void Hy3TabGroup::tick() {
 }
 
 std::pair<CBox, CBox> Hy3TabGroup::getRenderBB() const {
-	auto* monitor = g_pHyprOpenGL->m_RenderData.pMonitor.get();
+	auto* monitor = g_pHyprOpenGL->m_RenderData.m_monitor.get();
 	auto scale = monitor->scale;
 
 	auto monitor_size = monitor->vecSize;
@@ -706,7 +706,7 @@ void Hy3TabGroup::renderTabBar() {
 
 	auto [box, scaledBox] = this->getRenderBB();
 
-	auto* monitor = g_pHyprOpenGL->m_RenderData.pMonitor.get();
+	auto* monitor = g_pHyprOpenGL->m_RenderData.m_monitor.get();
 	auto scale = monitor->scale;
 
 	if (!this->bar.damaged) {
@@ -758,7 +758,7 @@ void Hy3TabGroup::renderTabBar() {
 
 			auto wpos =
 			    window->m_vRealPosition->value() - monitor->vecPosition
-			    + (window->m_pWorkspace ? window->m_pWorkspace->m_vRenderOffset->value() : Vector2D());
+			    + (window->m_workspace ? window->m_workspace->m_vRenderOffset->value() : Vector2D());
 
 			auto wsize = window->m_realSize->value();
 
