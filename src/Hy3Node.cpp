@@ -210,10 +210,9 @@ PHLWINDOW Hy3Node::bringToTop() {
 				if (window != nullptr) return window;
 			}
 		}
-
-		return nullptr;
 	}
 	}
+	return nullptr;
 }
 
 void Hy3Node::focusWindow() {
@@ -277,6 +276,8 @@ Hy3Node* Hy3Node::getFocusedNode(bool ignore_group_focus, bool stop_at_expanded)
 		}
 	}
 	}
+	// this shouldn't ever be reached
+	return nullptr;
 }
 
 bool Hy3Node::isIndirectlyFocused() {
@@ -321,13 +322,13 @@ void Hy3Node::recalcSizePosRecursive(bool no_animation) {
 	auto gaps_out = workspace_rule.gapsOut.value_or(*p_gaps_out);
 
 	auto gap_topleft_offset = Vector2D(
-	    (int) -(gaps_in.m_left - gaps_out.left),
-	    (int) -(gaps_in.m_top - gaps_out.top)
+	    (int) -(gaps_in.m_left - gaps_out.m_left),
+	    (int) -(gaps_in.m_top - gaps_out.m_top)
 	);
 
 	auto gap_bottomright_offset = Vector2D(
-			(int) -(gaps_in.m_right - gaps_out.right),
-			(int) -(gaps_in.m_bottom - gaps_out.bottom)
+			(int) -(gaps_in.m_right - gaps_out.m_right),
+			(int) -(gaps_in.m_bottom - gaps_out.m_bottom)
 	);
 	// clang-format on
 
@@ -336,15 +337,15 @@ void Hy3Node::recalcSizePosRecursive(bool no_animation) {
 		auto& monitor = this->workspace->m_monitor;
 
 		if (window->isEffectiveInternalFSMode(FSMODE_FULLSCREEN)) {
-			*window->m_realPosition = monitor->vecPosition;
-			*window->m_realSize = monitor->vecSize;
+			*window->m_realPosition = monitor->m_position;
+			*window->m_realSize = monitor->m_size;
 			return;
 		}
 
 		Hy3Node fake_node = {
 		    .data = window,
-		    .position = monitor->vecPosition + monitor->vecReservedTopLeft,
-		    .size = monitor->vecSize - monitor->vecReservedTopLeft - monitor->vecReservedBottomRight,
+		    .position = monitor->m_position + monitor->m_reservedTopLeft,
+		    .size = monitor->m_size - monitor->m_reservedTopLeft - monitor->m_reservedBottomRight,
 		    .gap_topleft_offset = gap_topleft_offset,
 		    .gap_bottomright_offset = gap_bottomright_offset,
 		    .workspace = this->workspace,
@@ -375,7 +376,7 @@ void Hy3Node::recalcSizePosRecursive(bool no_animation) {
 
 	auto& group = this->data.as_group();
 
-	double constraint;
+	double constraint = 0.0;
 	switch (group.layout) {
 	case Hy3GroupLayout::SplitH:
 		constraint = tsize.x - gap_topleft_offset.x - gap_bottomright_offset.x;
@@ -532,7 +533,7 @@ void findTopWindowInNode(Hy3Node& node, FindTopWindowInNodeResult& result) {
 	switch (node.data.type()) {
 	case Hy3NodeType::Window: {
 		auto window = node.data.as_window();
-		auto& windows = g_pCompositor->m_vWindows;
+		auto& windows = g_pCompositor->m_windows;
 
 		for (; result.index < windows.size(); result.index++) {
 			if (windows[result.index] == window) {
@@ -630,9 +631,8 @@ bool Hy3Node::isUrgent() {
 		for (auto* child: this->data.as_group().children) {
 			if (child->isUrgent()) return true;
 		}
-
-		return false;
 	}
+	return false;
 }
 
 void Hy3Node::setHidden(bool hidden) {

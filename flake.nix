@@ -1,12 +1,20 @@
 {
   inputs = {
-    hyprland.url = "github:hyprwm/Hyprland?rev=72cb5d24b6894334da021157c626556a8e99b6ff";
+    hyprutils = {
+      url = "github:hyprwm/hyprutils";
+      inputs.nixpkgs.follows = "hyprland/nixpkgs";
+    };
+    hyprland = {
+      url = "github:hyprwm/Hyprland";
+      inputs.hyprutils.follows = "hyprutils";
+    };
   };
 
-  outputs = { self, hyprland, ... }: let
+  outputs = {hyprland, ...}: let
     inherit (hyprland.inputs) nixpkgs;
 
-    hyprlandSystems = fn: nixpkgs.lib.genAttrs
+    hyprlandSystems = fn:
+      nixpkgs.lib.genAttrs
       (builtins.attrNames hyprland.packages)
       (system: fn system nixpkgs.legacyPackages.${system});
 
@@ -30,7 +38,7 @@
       impure = import ./shell.nix {
         pkgs = import <nixpkgs> {};
         hlversion = hyprlandVersion;
-        hyprland = (pkgs.appendOverlays [ hyprland.overlays.hyprland-packages ]).hyprland-debug.overrideAttrs {
+        hyprland = (pkgs.appendOverlays [hyprland.overlays.hyprland-packages]).hyprland-debug.overrideAttrs {
           dontStrip = true;
         };
       };
