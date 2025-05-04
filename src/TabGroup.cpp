@@ -617,7 +617,7 @@ void Hy3TabGroup::tick() {
 	this->bar.tick();
 
 	if (valid(this->workspace)) {
-		auto has_fullscreen = this->workspace->m_hasFullscreenWindow;
+		auto has_fullscreen = this->workspace->m_bHasFullscreenWindow;
 
 		if (!has_fullscreen && *no_gaps_when_only) {
 			auto root_node = g_Hy3Layout->getWorkspaceRootGroup(this->workspace.get());
@@ -631,7 +631,7 @@ void Hy3TabGroup::tick() {
 			if (this->bar.fade_opacity->goal() != 1.0) *this->bar.fade_opacity = 1.0;
 		}
 
-		auto workspaceOffset = this->workspace->m_renderOffset->value();
+		auto workspaceOffset = this->workspace->m_vRenderOffset->value();
 		if (this->last_workspace_offset != workspaceOffset) {
 			// First we damage the area where the bar was during the previous
 			// tick, cleaning up after ourselves
@@ -649,7 +649,7 @@ void Hy3TabGroup::tick() {
 			this->last_workspace_offset = workspaceOffset;
 		}
 
-		if (this->workspace->m_alpha->isBeingAnimated()) {
+		if (this->workspace->m_fAlpha->isBeingAnimated()) {
 			auto pos = this->pos->value();
 			auto size = this->size->value();
 			damageBox(&pos, &size);
@@ -683,14 +683,14 @@ void Hy3TabGroup::tick() {
 
 std::pair<CBox, CBox> Hy3TabGroup::getRenderBB() const {
 	auto* monitor = g_pHyprOpenGL->m_RenderData.pMonitor.get();
-	auto scale = monitor->m_scale;
+	auto scale = monitor->scale;
 
-	auto monitor_size = monitor->m_size;
-	auto pos = this->pos->value() - monitor->m_position;
+	auto monitor_size = monitor->vecSize;
+	auto pos = this->pos->value() - monitor->vecPosition;
 	auto size = this->size->value();
 
 	if (valid(this->workspace)) {
-		pos = pos + this->workspace->m_renderOffset->value();
+		pos = pos + this->workspace->m_vRenderOffset->value();
 	}
 
 	auto box = CBox(pos, size);
@@ -707,7 +707,7 @@ void Hy3TabGroup::renderTabBar() {
 	auto [box, scaledBox] = this->getRenderBB();
 
 	auto* monitor = g_pHyprOpenGL->m_RenderData.pMonitor.get();
-	auto scale = monitor->m_scale;
+	auto scale = monitor->scale;
 
 	if (!this->bar.damaged) {
 		pixman_region32 damage;
@@ -757,10 +757,10 @@ void Hy3TabGroup::renderTabBar() {
 			auto window = windowref.lock();
 
 			auto wpos =
-			    window->m_realPosition->value() - monitor->m_position
-			    + (window->m_workspace ? window->m_workspace->m_renderOffset->value() : Vector2D());
+			    window->m_vRealPosition->value() - monitor->vecPosition
+			    + (window->m_pWorkspace ? window->m_pWorkspace->m_vRenderOffset->value() : Vector2D());
 
-			auto wsize = window->m_realSize->value();
+			auto wsize = window->m_vRealSize->value();
 
 			CBox window_box = {wpos.x, wpos.y, wsize.x, wsize.y};
 			// scaleBox(&window_box, scale);
@@ -778,7 +778,7 @@ void Hy3TabGroup::renderTabBar() {
 	}
 
 	auto fade_opacity = this->bar.fade_opacity->value()
-	                  * (valid(this->workspace) ? this->workspace->m_alpha->value() : 1.0);
+	                  * (valid(this->workspace) ? this->workspace->m_fAlpha->value() : 1.0);
 
 	auto render_entry = [&](Hy3TabBarEntry& entry) {
 		Vector2D entry_pos = {

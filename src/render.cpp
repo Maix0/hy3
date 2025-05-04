@@ -27,7 +27,7 @@ void Hy3Render::renderTab(
 	auto rbox = box;
 	rdata.renderModif.applyToBox(rbox);
 
-	const auto& monitorSize = rdata.pMonitor->m_transformedSize;
+	const auto& monitorSize = rdata.pMonitor->vecTransformedSize;
 	auto monitorBox = CBox {Vector2D(), monitorSize};
 
 	auto matrix =

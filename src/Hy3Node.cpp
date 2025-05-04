@@ -177,7 +177,7 @@ void Hy3Node::focus(bool warp) {
 		auto window = this->data.as_window();
 		window->setHidden(false);
 		g_pCompositor->focusWindow(window);
-		if (warp) Hy3Layout::warpCursorToBox(window->m_position, window->m_size);
+		if (warp) Hy3Layout::warpCursorToBox(window->m_vPosition, window->m_vSize);
 		break;
 	}
 	case Hy3NodeType::Group: {
@@ -334,18 +334,18 @@ void Hy3Node::recalcSizePosRecursive(bool no_animation) {
 
 	if (this->data.is_window() && this->data.as_window()->isFullscreen()) {
 		auto window = this->data.as_window();
-		auto& monitor = this->workspace->m_monitor;
+		auto& monitor = this->workspace->m_pMonitor;
 
 		if (window->isEffectiveInternalFSMode(FSMODE_FULLSCREEN)) {
-			*window->m_realPosition = monitor->m_position;
-			*window->m_realSize = monitor->m_size;
+			*window->m_vRealPosition = monitor->vecPosition;
+			*window->m_vRealSize = monitor->vecSize;
 			return;
 		}
 
 		Hy3Node fake_node = {
 		    .data = window,
-		    .position = monitor->m_position + monitor->m_reservedTopLeft,
-		    .size = monitor->m_size - monitor->m_reservedTopLeft - monitor->m_reservedBottomRight,
+		    .position = monitor->vecPosition + monitor->vecReservedTopLeft,
+		    .size = monitor->vecSize - monitor->vecReservedTopLeft - monitor->vecReservedBottomRight,
 		    .gap_topleft_offset = gap_topleft_offset,
 		    .gap_bottomright_offset = gap_bottomright_offset,
 		    .workspace = this->workspace,
@@ -533,7 +533,7 @@ void findTopWindowInNode(Hy3Node& node, FindTopWindowInNodeResult& result) {
 	switch (node.data.type()) {
 	case Hy3NodeType::Window: {
 		auto window = node.data.as_window();
-		auto& windows = g_pCompositor->m_windows;
+		auto& windows = g_pCompositor->m_vWindows;
 
 		for (; result.index < windows.size(); result.index++) {
 			if (windows[result.index] == window) {
@@ -568,7 +568,7 @@ void Hy3Node::updateTabBar(bool no_animation) {
 			FindTopWindowInNodeResult result;
 			findTopWindowInNode(*this, result);
 			group.tab_bar->target_window = result.window;
-			if (result.window != nullptr) group.tab_bar->workspace = result.window->m_workspace;
+			if (result.window != nullptr) group.tab_bar->workspace = result.window->m_pWorkspace;
 		} else if (group.tab_bar != nullptr) {
 			group.tab_bar->bar.beginDestroy();
 			group.tab_bar = nullptr;
@@ -601,7 +601,7 @@ void Hy3Node::updateDecos() {
 
 std::string Hy3Node::getTitle() {
 	switch (this->data.type()) {
-	case Hy3NodeType::Window: return this->data.as_window()->m_title;
+	case Hy3NodeType::Window: return this->data.as_window()->m_szTitle;
 	case Hy3NodeType::Group:
 		std::string title;
 		auto& group = this->data.as_group();
@@ -626,7 +626,7 @@ std::string Hy3Node::getTitle() {
 
 bool Hy3Node::isUrgent() {
 	switch (this->data.type()) {
-	case Hy3NodeType::Window: return this->data.as_window()->m_isUrgent;
+	case Hy3NodeType::Window: return this->data.as_window()->m_bIsUrgent;
 	case Hy3NodeType::Group:
 		for (auto* child: this->data.as_group().children) {
 			if (child->isUrgent()) return true;
